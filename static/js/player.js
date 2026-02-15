@@ -13,9 +13,6 @@
     ].filter(Boolean);
     const videoEl = document.getElementById("player-video");
 
-    // Keep crop conservative: only near-screen-ratio landscape images use cover.
-    const LANDSCAPE_COVER_THRESHOLD = 0.03;
-
     let playlist = [];
     let currentIndex = 0;
     let timer = null;
@@ -126,13 +123,7 @@
         if (!width || !height || height > width) {
             return "image-portrait";
         }
-
-        const screenAspect = window.innerWidth / Math.max(1, window.innerHeight);
-        const imageAspect = width / height;
-        const normalizedDelta = Math.abs(imageAspect - screenAspect) / Math.max(screenAspect, 0.01);
-        if (normalizedDelta <= LANDSCAPE_COVER_THRESHOLD) {
-            return "image-landscape-cover";
-        }
+        // Landscape images should fit on screen with no zoom/crop.
         return "image-landscape-contain";
     }
 
