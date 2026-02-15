@@ -2,7 +2,10 @@
     const body = document.body;
     const statusUrl = body.dataset.statusUrl;
     const root = document.getElementById("player-root");
-    const backdropEl = document.getElementById("player-backdrop");
+    const backdropEls = [
+        document.getElementById("player-backdrop-a"),
+        document.getElementById("player-backdrop-b"),
+    ].filter(Boolean);
     const overlay = document.getElementById("player-overlay");
     const imageEls = [
         document.getElementById("player-image-a"),
@@ -10,14 +13,15 @@
     ].filter(Boolean);
     const videoEl = document.getElementById("player-video");
 
-    const LANDSCAPE_COVER_THRESHOLD = 0.14;
+    // Keep crop conservative: only near-screen-ratio landscape images use cover.
+    const LANDSCAPE_COVER_THRESHOLD = 0.03;
 
     let playlist = [];
     let currentIndex = 0;
     let timer = null;
-    let activeAlbumId = null;
     let playlistKey = null;
     let activeImageIndex = -1;
+    let activeBackdropIndex = -1;
     let imageRequestToken = 0;
 
     function setOverlay(text) {
@@ -36,12 +40,25 @@
         timer = setTimeout(playNext, ms);
     }
 
+    function clearImageModeClasses() {
+        root.classList.remove("image-landscape-cover", "image-landscape-contain", "image-portrait");
+    }
+
     function hideAllImages() {
         imageEls.forEach((img) => {
             img.classList.remove("visible");
             img.classList.add("hidden");
         });
         activeImageIndex = -1;
+    }
+
+    function hideAllBackdrops() {
+        backdropEls.forEach((el) => {
+            el.classList.remove("visible");
+            el.classList.add("hidden");
+            el.style.backgroundImage = "none";
+        });
+        activeBackdropIndex = -1;
     }
 
     function hideVideo() {
@@ -53,44 +70,25 @@
         videoEl.load();
     }
 
-    function clearImageModeClasses() {
-        root.classList.remove("image-landscape-cover", "image-landscape-contain", "image-portrait");
-    }
-
-    function chooseImageMode(width, height) {
-        if (!width || !height || width < height) {
-            return "image-portrait";
-        }
-
-        const screenAspect = window.innerWidth / Math.max(1, window.innerHeight);
-        const imageAspect = width / height;
-        const normalizedDelta = Math.abs(imageAspect - screenAspect) / Math.max(screenAspect, 0.01);
-
-        if (normalizedDelta <= LANDSCAPE_COVER_THRESHOLD) {
-            return "image-landscape-cover";
-        }
-        return "image-landscape-contain";
-    }
-
-    function activateImage(targetEl) {
-        imageEls.forEach((img, index) => {
-            const isTarget = img === targetEl;
-            img.classList.toggle("visible", isTarget);
-            img.classList.toggle("hidden", !isTarget);
+    function activateInLayers(elements, targetEl, updateIndex) {
+        elements.forEach((el, index) => {
+            const isTarget = el === targetEl;
+            el.classList.toggle("visible", isTarget);
+            el.classList.toggle("hidden", !isTarget);
             if (isTarget) {
-                activeImageIndex = index;
+                updateIndex(index);
             }
         });
     }
 
-    function getNextImageEl() {
-        if (!imageEls.length) {
+    function getNextLayer(elements, activeIndex) {
+        if (!elements.length) {
             return null;
         }
-        if (imageEls.length === 1 || activeImageIndex < 0) {
-            return imageEls[0];
+        if (elements.length === 1 || activeIndex < 0) {
+            return elements[0];
         }
-        return imageEls[activeImageIndex === 0 ? 1 : 0];
+        return elements[activeIndex === 0 ? 1 : 0];
     }
 
     function preloadImage(url) {
@@ -103,6 +101,14 @@
         });
     }
 
+    function decodeIntoElement(el, url) {
+        el.src = url;
+        if (typeof el.decode === "function") {
+            return el.decode().catch(() => {});
+        }
+        return Promise.resolve();
+    }
+
     function prefetchUpcomingPhoto() {
         if (!playlist.length) {
             return;
@@ -113,6 +119,21 @@
         }
         const prefetch = new Image();
         prefetch.src = nextItem.normalized_url;
+    }
+
+    function chooseImageMode(width, height) {
+        // Portrait detection is strict and simple (iPhone-style vertical photos).
+        if (!width || !height || height > width) {
+            return "image-portrait";
+        }
+
+        const screenAspect = window.innerWidth / Math.max(1, window.innerHeight);
+        const imageAspect = width / height;
+        const normalizedDelta = Math.abs(imageAspect - screenAspect) / Math.max(screenAspect, 0.01);
+        if (normalizedDelta <= LANDSCAPE_COVER_THRESHOLD) {
+            return "image-landscape-cover";
+        }
+        return "image-landscape-contain";
     }
 
     async function showImage(item) {
@@ -129,26 +150,36 @@
         clearImageModeClasses();
         hideVideo();
 
-        if (backdropEl) {
-            backdropEl.style.backgroundImage = `url("${backdropUrl}")`;
-        }
-
         try {
             const probe = await preloadImage(url);
             if (requestId !== imageRequestToken) {
                 return false;
             }
 
-            const target = getNextImageEl();
-            if (!target) {
+            const nextImageEl = getNextLayer(imageEls, activeImageIndex);
+            const nextBackdropEl = getNextLayer(backdropEls, activeBackdropIndex);
+            if (!nextImageEl || !nextBackdropEl) {
                 return false;
             }
 
-            target.src = url;
+            nextBackdropEl.style.backgroundImage = `url("${backdropUrl}")`;
+            activateInLayers(backdropEls, nextBackdropEl, (idx) => {
+                activeBackdropIndex = idx;
+            });
+
+            await decodeIntoElement(nextImageEl, url);
+            if (requestId !== imageRequestToken) {
+                return false;
+            }
+
             const modeClass = chooseImageMode(probe.naturalWidth, probe.naturalHeight);
             clearImageModeClasses();
             root.classList.add(modeClass);
-            activateImage(target);
+
+            activateInLayers(imageEls, nextImageEl, (idx) => {
+                activeImageIndex = idx;
+            });
+
             return true;
         } catch (_err) {
             if (requestId === imageRequestToken) {
@@ -166,11 +197,8 @@
         root.classList.remove("showing-image");
         clearImageModeClasses();
 
-        if (backdropEl) {
-            backdropEl.style.backgroundImage = "none";
-        }
-
         hideAllImages();
+        hideAllBackdrops();
 
         videoEl.src = url;
         videoEl.classList.remove("hidden");
@@ -241,17 +269,14 @@
             const status = await fetchJson(statusUrl);
             if (!status.active_album_id) {
                 playlist = [];
-                activeAlbumId = null;
                 playlistKey = null;
                 imageRequestToken += 1;
                 clearNextTimer();
                 root.classList.remove("showing-image", "showing-video");
                 clearImageModeClasses();
                 hideAllImages();
+                hideAllBackdrops();
                 hideVideo();
-                if (backdropEl) {
-                    backdropEl.style.backgroundImage = "none";
-                }
                 setOverlay("No active album selected");
                 return;
             }
@@ -263,7 +288,6 @@
             }
 
             playlist = maybeShuffle(payload.items || [], Boolean(payload.settings && payload.settings.shuffle));
-            activeAlbumId = status.active_album_id;
             playlistKey = nextKey;
             currentIndex = 0;
             clearNextTimer();
