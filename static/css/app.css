@@ -316,7 +316,7 @@ td {
     object-fit: contain;
 }
 
-.player-root.showing-image.image-portrait .player-backdrop {
+.player-root.showing-image .player-backdrop {
     opacity: 0.95;
 }
 

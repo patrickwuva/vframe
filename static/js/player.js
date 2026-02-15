@@ -17,17 +17,12 @@
         overlay.textContent = text;
     }
 
-    function setImageOrientationClass(item) {
-        const width = Number(item && item.width);
-        const height = Number(item && item.height);
-
-        let isLandscape = false;
-        if (Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0) {
-            isLandscape = width >= height;
-        } else {
-            isLandscape = imgEl.naturalWidth >= imgEl.naturalHeight;
-        }
-
+    function setImageOrientationClass() {
+        const naturalWidth = Number(imgEl.naturalWidth || 0);
+        const naturalHeight = Number(imgEl.naturalHeight || 0);
+        const isLandscape = naturalWidth > 0 && naturalHeight > 0
+            ? naturalWidth >= naturalHeight
+            : false;
         root.classList.add("showing-image");
         root.classList.remove("showing-video");
         root.classList.toggle("image-landscape", isLandscape);
@@ -36,16 +31,21 @@
 
     function showImage(item) {
         const url = item.normalized_url;
+        const backdropUrl = item.thumb_url || url;
+
         videoEl.pause();
         videoEl.classList.add("hidden");
         videoEl.removeAttribute("src");
         videoEl.load();
 
+        root.classList.add("showing-image");
+        root.classList.remove("showing-video", "image-landscape", "image-portrait");
+
         if (backdropEl) {
-            backdropEl.style.backgroundImage = `url("${url}")`;
+            backdropEl.style.backgroundImage = `url("${backdropUrl}")`;
         }
 
-        imgEl.onload = () => setImageOrientationClass(item);
+        imgEl.onload = () => setImageOrientationClass();
         imgEl.src = url;
         imgEl.classList.remove("hidden");
     }
