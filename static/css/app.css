@@ -327,8 +327,13 @@ td {
     object-fit: contain;
 }
 
-.player-root.showing-image .player-backdrop.visible {
+.player-root.showing-image.image-portrait .player-backdrop.visible {
     opacity: 0.78;
+}
+
+.player-root.showing-image.image-landscape-cover .player-backdrop.visible,
+.player-root.showing-image.image-landscape-contain .player-backdrop.visible {
+    opacity: 0;
 }
 
 .player-overlay {

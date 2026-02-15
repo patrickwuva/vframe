@@ -123,8 +123,8 @@
         if (!width || !height || height > width) {
             return "image-portrait";
         }
-        // Landscape images should fit on screen with no zoom/crop.
-        return "image-landscape-contain";
+        // Landscape images should fill the screen.
+        return "image-landscape-cover";
     }
 
     async function showImage(item) {
