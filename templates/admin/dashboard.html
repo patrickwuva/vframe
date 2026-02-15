@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<section class="grid three">
+    <article class="card stat">
+        <h3>Media</h3>
+        <p>{{ counts.media }}</p>
+    </article>
+    <article class="card stat">
+        <h3>Ready</h3>
+        <p>{{ counts.ready }}</p>
+    </article>
+    <article class="card stat">
+        <h3>Albums</h3>
+        <p>{{ counts.albums }}</p>
+    </article>
+</section>
+
+<section class="grid two mt">
+    <article class="card">
+        <h2>Playback Settings</h2>
+        <form method="post" action="{{ url_for('admin.update_settings') }}">
+            <label for="active_album_id">Active Album</label>
+            <select id="active_album_id" name="active_album_id">
+                <option value="">None</option>
+                {% for album in albums %}
+                <option value="{{ album.id }}" {% if active_album_id == album.id %}selected{% endif %}>{{ album.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="default_duration">Default Photo Duration (seconds)</label>
+            <input id="default_duration" name="default_duration" type="number" min="1" value="{{ settings.get('default_duration', '8') }}">
+
+            <label for="transition">Transition</label>
+            <select id="transition" name="transition">
+                {% set tr = settings.get('transition', 'fade') %}
+                <option value="fade" {% if tr == 'fade' %}selected{% endif %}>Fade</option>
+                <option value="slide" {% if tr == 'slide' %}selected{% endif %}>Slide</option>
+                <option value="zoom" {% if tr == 'zoom' %}selected{% endif %}>Zoom</option>
+            </select>
+
+            {% set sh = settings.get('shuffle', '0') %}
+            <label class="checkbox-row">
+                <input type="checkbox" name="shuffle" value="1" {% if sh == '1' %}checked{% endif %}>
+                Shuffle Playlist
+            </label>
+
+            <button type="submit">Save Settings</button>
+        </form>
+    </article>
+
+    <article class="card">
+        <h2>Storage</h2>
+        {% if usage %}
+        <dl class="kv">
+            <dt>Total</dt><dd>{{ usage.total_gb }} GB</dd>
+            <dt>Used</dt><dd>{{ usage.used_gb }} GB</dd>
+            <dt>Free</dt><dd>{{ usage.free_gb }} GB</dd>
+        </dl>
+        {% else %}
+        <p>Storage stats unavailable. Check `MEDIA_ROOT` path and permissions.</p>
+        {% endif %}
+        <p class="muted">Media root: {{ config.MEDIA_ROOT }}</p>
+    </article>
+</section>
+{% endblock %}

@@ -1,4 +1,1 @@
-fastapi
-uvicorn
-python-multipart
-jinja2
+Flask>=3.0,<4.0

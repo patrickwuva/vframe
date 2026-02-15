@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Upload{% endblock %}
+{% block content %}
+<article class="card">
+    <h1>Upload Media</h1>
+    <p>Files are saved into `incoming/` and normalized in the background.</p>
+
+    <form method="post" enctype="multipart/form-data" class="upload-form">
+        <input type="file" name="files" multiple accept=".jpg,.jpeg,.png,.mp4,.mov,.m4v,.avi,.mkv,.webm">
+        <button type="submit">Upload</button>
+    </form>
+</article>
+{% endblock %}
