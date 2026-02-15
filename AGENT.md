@@ -19,6 +19,7 @@ Primary goals:
 - **DB:** SQLite (metadata: albums, ordering, settings)
 - **Frontend:** Server-rendered templates (Jinja2) + minimal JS (HTMX optional)
 - **Player:** `/player` page (HTML/CSS transitions + HTML5 `<video>`)
+- **Optional native player runtime:** `mpv` daemon driven by the API
 - **Media processing:** `ffmpeg` (thumbnails + video conversion)
 - **Reverse proxy (optional):** Caddy or nginx
 - **Runtime:** systemd service (preferred) or Docker Compose

@@ -309,6 +309,14 @@ td {
     object-fit: contain;
 }
 
+.player-image.fit-cover {
+    object-fit: cover;
+}
+
+.player-image.fit-contain {
+    object-fit: contain;
+}
+
 .player-media.visible {
     opacity: 1;
 }
@@ -318,21 +326,11 @@ td {
     pointer-events: none;
 }
 
-.player-root.showing-image.image-landscape-cover .player-image.visible {
-    object-fit: cover;
-}
-
-.player-root.showing-image.image-landscape-contain .player-image.visible,
-.player-root.showing-image.image-portrait .player-image.visible {
-    object-fit: contain;
-}
-
-.player-root.showing-image.image-portrait .player-backdrop.visible {
+.player-root.showing-image.portrait-mode .player-backdrop.visible {
     opacity: 0.78;
 }
 
-.player-root.showing-image.image-landscape-cover .player-backdrop.visible,
-.player-root.showing-image.image-landscape-contain .player-backdrop.visible {
+.player-root.showing-image .player-backdrop.visible {
     opacity: 0;
 }
 

@@ -14,6 +14,13 @@ python scripts/init_db.py
 python app.py
 ```
 
+Install runtime packages (Desktop mode):
+
+```bash
+sudo apt update
+sudo apt install -y git ffmpeg mpv python3 python3-venv python3-pip
+```
+
 Open:
 - Admin: `http://localhost:5000/admin`
 - Player: `http://localhost:5000/player`
@@ -26,7 +33,7 @@ Open:
 - SQLite metadata is stored at `instance/frame.db` by default.
 - In Admin -> Albums, use `Play on Pi` to switch the active album immediately.
 
-## Auto-start on boot (Pi HDMI player)
+## Auto-start on boot (Pi HDMI player, native mpv)
 
 Use Raspberry Pi OS with Desktop for simplest kiosk setup.
 
@@ -41,20 +48,21 @@ Install and enable the system services:
 
 ```bash
 sudo cp systemd/frameapp.service /etc/systemd/system/frameapp.service
-sudo cp systemd/kiosk.service /etc/systemd/system/kiosk.service
+sudo cp systemd/player-native.service /etc/systemd/system/player-native.service
 sudo systemctl daemon-reload
-sudo systemctl enable frameapp.service kiosk.service
-sudo systemctl restart frameapp.service kiosk.service
+sudo systemctl disable --now kiosk.service || true
+sudo systemctl enable frameapp.service player-native.service
+sudo systemctl restart frameapp.service player-native.service
 ```
 
 Check status/logs:
 
 ```bash
-sudo systemctl status frameapp.service kiosk.service
-journalctl -u frameapp.service -u kiosk.service -f
+sudo systemctl status frameapp.service player-native.service
+journalctl -u frameapp.service -u player-native.service -f
 ```
 
 Important:
-- `systemd/frameapp.service` and `systemd/kiosk.service` currently use user/path `pw` and `/home/pw/vframe`; edit those if your username/path differs.
+- `systemd/frameapp.service` and `systemd/player-native.service` currently use user/path `pw` and `/home/pw/vframe`; edit those if your username/path differs.
 - Set a real secret in `systemd/frameapp.service` (`Environment=SECRET_KEY=...`) before long-term use.
-- `systemd/kiosk.service` in this repo is for Raspberry Pi OS Desktop (not Lite).
+- If you choose browser mode instead of native, you can still use `systemd/kiosk.service`.

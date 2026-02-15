@@ -1,0 +1,19 @@
+[Unit]
+Description=VFrame Native Player (mpv)
+After=graphical.target frameapp.service
+Wants=graphical.target frameapp.service
+
+[Service]
+Type=simple
+User=pw
+Group=pw
+WorkingDirectory=/home/pw/vframe
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/pw/.Xauthority
+Environment=VFRAME_API_BASE=http://127.0.0.1:5000
+ExecStart=/home/pw/vframe/.venv/bin/python /home/pw/vframe/scripts/player_native_mpv.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=graphical.target

@@ -38,7 +38,7 @@
     }
 
     function clearImageModeClasses() {
-        root.classList.remove("image-landscape-cover", "image-landscape-contain", "image-portrait");
+        root.classList.remove("portrait-mode");
     }
 
     function hideAllImages() {
@@ -121,10 +121,10 @@
     function chooseImageMode(width, height) {
         // Portrait detection is strict and simple (iPhone-style vertical photos).
         if (!width || !height || height > width) {
-            return "image-portrait";
+            return { fitClass: "fit-contain", isPortrait: true };
         }
         // Landscape images should fill the screen.
-        return "image-landscape-cover";
+        return { fitClass: "fit-cover", isPortrait: false };
     }
 
     async function showImage(item) {
@@ -163,9 +163,10 @@
                 return false;
             }
 
-            const modeClass = chooseImageMode(probe.naturalWidth, probe.naturalHeight);
-            clearImageModeClasses();
-            root.classList.add(modeClass);
+            const mode = chooseImageMode(probe.naturalWidth, probe.naturalHeight);
+            nextImageEl.classList.remove("fit-cover", "fit-contain");
+            nextImageEl.classList.add(mode.fitClass);
+            root.classList.toggle("portrait-mode", mode.isPortrait);
 
             activateInLayers(imageEls, nextImageEl, (idx) => {
                 activeImageIndex = idx;
