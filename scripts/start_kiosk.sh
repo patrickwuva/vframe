@@ -12,9 +12,9 @@ for _ in $(seq 1 30); do
   sleep 1
 done
 
-xset -dpms || true
-xset s off || true
-xset s noblank || true
+xset -dpms >/dev/null 2>&1 || true
+xset s off >/dev/null 2>&1 || true
+xset s noblank >/dev/null 2>&1 || true
 
 CHROME_BIN=""
 if command -v chromium-browser >/dev/null 2>&1; then
@@ -29,6 +29,11 @@ fi
 exec "$CHROME_BIN" \
   --kiosk \
   --incognito \
+  --no-first-run \
+  --no-default-browser-check \
+  --disable-sync \
+  --password-store=basic \
+  --user-data-dir=/home/pw/.config/vframe-kiosk \
   --noerrdialogs \
   --disable-infobars \
   --autoplay-policy=no-user-gesture-required \
