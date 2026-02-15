@@ -1,6 +1,8 @@
 (function () {
     const body = document.body;
     const statusUrl = body.dataset.statusUrl;
+    const root = document.getElementById("player-root");
+    const backdropEl = document.getElementById("player-backdrop");
     const overlay = document.getElementById("player-overlay");
     const imgEl = document.getElementById("player-image");
     const videoEl = document.getElementById("player-video");
@@ -15,17 +17,46 @@
         overlay.textContent = text;
     }
 
-    function showImage(url) {
+    function setImageOrientationClass(item) {
+        const width = Number(item && item.width);
+        const height = Number(item && item.height);
+
+        let isLandscape = false;
+        if (Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0) {
+            isLandscape = width >= height;
+        } else {
+            isLandscape = imgEl.naturalWidth >= imgEl.naturalHeight;
+        }
+
+        root.classList.add("showing-image");
+        root.classList.remove("showing-video");
+        root.classList.toggle("image-landscape", isLandscape);
+        root.classList.toggle("image-portrait", !isLandscape);
+    }
+
+    function showImage(item) {
+        const url = item.normalized_url;
         videoEl.pause();
         videoEl.classList.add("hidden");
         videoEl.removeAttribute("src");
         videoEl.load();
 
+        if (backdropEl) {
+            backdropEl.style.backgroundImage = `url("${url}")`;
+        }
+
+        imgEl.onload = () => setImageOrientationClass(item);
         imgEl.src = url;
         imgEl.classList.remove("hidden");
     }
 
     function showVideo(url) {
+        root.classList.add("showing-video");
+        root.classList.remove("showing-image", "image-landscape", "image-portrait");
+        if (backdropEl) {
+            backdropEl.style.backgroundImage = "none";
+        }
+
         imgEl.classList.add("hidden");
 
         videoEl.src = url;
@@ -59,7 +90,7 @@
         }
 
         setOverlay("");
-        showImage(item.normalized_url);
+        showImage(item);
         const durationMs = Math.max(1, Number(item.duration_seconds || 8)) * 1000;
         scheduleNext(durationMs);
     }
@@ -100,6 +131,10 @@
                 playlist = [];
                 activeAlbumId = null;
                 playlistKey = null;
+                root.classList.remove("showing-image", "showing-video", "image-landscape", "image-portrait");
+                if (backdropEl) {
+                    backdropEl.style.backgroundImage = "none";
+                }
                 setOverlay("No active album selected");
                 return;
             }

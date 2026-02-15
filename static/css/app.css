@@ -265,6 +265,7 @@ td {
 
 .player-page {
     background: #050505;
+    cursor: none;
 }
 
 .player-root {
@@ -273,6 +274,21 @@ td {
     overflow: hidden;
     position: relative;
     background: #000;
+    cursor: none;
+}
+
+.player-backdrop {
+    position: absolute;
+    inset: -8%;
+    z-index: 1;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    filter: blur(40px) saturate(1.1);
+    transform: scale(1.05);
+    opacity: 0;
+    transition: opacity 250ms ease;
+    pointer-events: none;
 }
 
 .player-media {
@@ -283,11 +299,25 @@ td {
     object-fit: contain;
     transition: opacity 0.9s ease;
     opacity: 1;
+    z-index: 2;
+    cursor: none;
 }
 
 .player-media.hidden {
     opacity: 0;
     pointer-events: none;
+}
+
+.player-root.showing-image.image-landscape #player-image {
+    object-fit: cover;
+}
+
+.player-root.showing-image.image-portrait #player-image {
+    object-fit: contain;
+}
+
+.player-root.showing-image.image-portrait .player-backdrop {
+    opacity: 0.95;
 }
 
 .player-overlay {
@@ -300,6 +330,8 @@ td {
     background: rgba(0, 0, 0, 0.5);
     padding: 0.45rem 0.75rem;
     border-radius: 8px;
+    z-index: 3;
+    cursor: none;
 }
 
 @media (max-width: 800px) {
