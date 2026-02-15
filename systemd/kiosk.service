@@ -1,17 +1,17 @@
 [Unit]
-Description=VFrame Kiosk Player (Chromium)
-After=graphical.target frameapp.service
-Wants=graphical.target frameapp.service
+Description=VFrame Kiosk Player (Chromium, Lite)
+After=network-online.target frameapp.service
+Wants=network-online.target frameapp.service
 
 [Service]
 Type=simple
 User=pw
 Group=pw
-Environment=DISPLAY=:0
-Environment=XAUTHORITY=/home/pw/.Xauthority
-ExecStart=/home/pw/vframe/scripts/start_kiosk.sh
+WorkingDirectory=/home/pw/vframe
+Environment=HOME=/home/pw
+ExecStart=/usr/bin/xinit /home/pw/vframe/scripts/start_kiosk.sh -- :0 -nocursor -nolisten tcp vt1
 Restart=always
 RestartSec=5
 
 [Install]
-WantedBy=graphical.target
+WantedBy=multi-user.target
