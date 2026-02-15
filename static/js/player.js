@@ -9,6 +9,7 @@
     let currentIndex = 0;
     let timer = null;
     let activeAlbumId = null;
+    let playlistKey = null;
 
     function setOverlay(text) {
         overlay.textContent = text;
@@ -83,25 +84,35 @@
         return shuffled;
     }
 
+    function buildPlaylistKey(activeId, payload) {
+        const items = payload.items || [];
+        const settings = payload.settings || {};
+        const itemKey = items
+            .map((item) => `${item.media_id}:${item.type}:${item.duration_seconds || ""}`)
+            .join("|");
+        return `${activeId}|${settings.shuffle ? "1" : "0"}|${itemKey}`;
+    }
+
     async function refreshPlaylist() {
         try {
             const status = await fetchJson(statusUrl);
             if (!status.active_album_id) {
                 playlist = [];
                 activeAlbumId = null;
+                playlistKey = null;
                 setOverlay("No active album selected");
                 return;
             }
-
-            const shouldReload = status.active_album_id !== activeAlbumId || playlist.length === 0;
-            if (!shouldReload) {
+            const payload = await fetchJson(`/api/albums/${status.active_album_id}/playlist`);
+            const nextKey = buildPlaylistKey(status.active_album_id, payload);
+            if (nextKey === playlistKey && playlist.length) {
                 return;
             }
 
-            const payload = await fetchJson(`/api/albums/${status.active_album_id}/playlist`);
             const items = payload.items || [];
             playlist = maybeShuffle(items, Boolean(payload.settings && payload.settings.shuffle));
             activeAlbumId = status.active_album_id;
+            playlistKey = nextKey;
             currentIndex = 0;
 
             if (!playlist.length) {
@@ -116,5 +127,5 @@
     }
 
     refreshPlaylist();
-    setInterval(refreshPlaylist, 15000);
+    setInterval(refreshPlaylist, 5000);
 })();

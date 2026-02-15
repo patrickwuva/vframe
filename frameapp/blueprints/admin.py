@@ -118,7 +118,12 @@ def albums():
         return redirect(url_for("admin.albums"))
 
     all_albums = store.list_albums()
-    return render_template("admin/albums.html", albums=all_albums)
+    active_album_id = store.get_active_album_id()
+    return render_template(
+        "admin/albums.html",
+        albums=all_albums,
+        active_album_id=active_album_id,
+    )
 
 
 @bp.get("/admin/albums/<album_id>")
@@ -130,11 +135,13 @@ def edit_album(album_id: str):
 
     items = store.get_album_items(album_id)
     ready_media = store.list_ready_media()
+    active_album_id = store.get_active_album_id()
     return render_template(
         "admin/album_edit.html",
         album=album,
         items=items,
         ready_media=ready_media,
+        active_album_id=active_album_id,
     )
 
 
@@ -161,6 +168,22 @@ def update_album_items(album_id: str):
             store.move_media_in_album(album_id, media_id, direction)
 
     return redirect(url_for("admin.edit_album", album_id=album_id))
+
+
+@bp.post("/admin/albums/<album_id>/activate")
+def activate_album(album_id: str):
+    album = store.get_album(album_id)
+    if album is None:
+        flash("Album not found", "error")
+        return redirect(url_for("admin.albums"))
+
+    store.set_active_album(album_id)
+    flash(f"Now playing: {album['name']}", "success")
+
+    next_url = request.form.get("next")
+    if next_url:
+        return redirect(next_url)
+    return redirect(url_for("admin.albums"))
 
 
 @bp.post("/admin/settings")

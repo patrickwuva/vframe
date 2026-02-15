@@ -19,8 +19,16 @@
                 <div>
                     <strong>{{ album.name }}</strong>
                     <span class="muted">{{ album.item_count }} items</span>
+                    {% if active_album_id == album.id %}
+                    <span class="badge ready">now playing</span>
+                    {% endif %}
                 </div>
-                <a class="button-link" href="{{ url_for('admin.edit_album', album_id=album.id) }}">Edit</a>
+                <div class="row-actions">
+                    <form method="post" action="{{ url_for('admin.activate_album', album_id=album.id) }}">
+                        <button type="submit">Play on Pi</button>
+                    </form>
+                    <a class="button-link" href="{{ url_for('admin.edit_album', album_id=album.id) }}">Edit</a>
+                </div>
             </li>
             {% else %}
             <li>No albums yet</li>

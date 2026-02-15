@@ -3,6 +3,15 @@
 {% block content %}
 <article class="card">
     <h1>Edit Album: {{ album.name }}</h1>
+    <div class="row-actions mt-half">
+        <form method="post" action="{{ url_for('admin.activate_album', album_id=album.id) }}">
+            <input type="hidden" name="next" value="{{ url_for('admin.edit_album', album_id=album.id) }}">
+            <button type="submit">Play This Album on Pi</button>
+        </form>
+        {% if active_album_id == album.id %}
+        <span class="badge ready">currently active</span>
+        {% endif %}
+    </div>
 </article>
 
 <section class="grid two mt">

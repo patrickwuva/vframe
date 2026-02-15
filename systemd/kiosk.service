@@ -1,0 +1,17 @@
+[Unit]
+Description=VFrame Kiosk Player (Chromium)
+After=graphical.target frameapp.service
+Wants=graphical.target frameapp.service
+
+[Service]
+Type=simple
+User=pw
+Group=pw
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/pw/.Xauthority
+ExecStart=/home/pw/vframe/scripts/start_kiosk.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=graphical.target

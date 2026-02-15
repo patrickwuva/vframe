@@ -7,7 +7,7 @@ class Config:
     BASE_DIR = Path(__file__).resolve().parents[1]
 
     # Default to a local directory on the Pi OS filesystem (NVMe root disk).
-    MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", "/home/pi/frame-media"))
+    MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", str(Path.home() / "frame-media")))
     INCOMING_DIR = MEDIA_ROOT / "incoming"
     LIBRARY_DIR = MEDIA_ROOT / "library"
     THUMBS_DIR = MEDIA_ROOT / ".thumbs"

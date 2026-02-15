@@ -30,13 +30,13 @@ Primary goals:
 ## Storage Model
 Media root is a local directory on Pi OS storage (NVMe):
 
-- `MEDIA_ROOT=/home/pi/frame-media`
+- `MEDIA_ROOT=/home/<user>/frame-media`
 
 Suggested subfolders (created automatically):
-- `/home/pi/frame-media/library/` (normalized “playable” media)
-- `/home/pi/frame-media/incoming/` (raw uploads)
-- `/home/pi/frame-media/.thumbs/` (thumbnails + poster frames)
-- `/home/pi/frame-media/.meta/` (optional sidecars)
+- `/home/<user>/frame-media/library/` (normalized “playable” media)
+- `/home/<user>/frame-media/incoming/` (raw uploads)
+- `/home/<user>/frame-media/.thumbs/` (thumbnails + poster frames)
+- `/home/<user>/frame-media/.meta/` (optional sidecars)
 
 Rules:
 - The web app writes uploads to `incoming/`
@@ -200,7 +200,7 @@ Default: LAN-only.
    - `pip install -r requirements.txt`
 
 2. Set env:
-   - `export MEDIA_ROOT=/home/pi/frame-media`
+   - `export MEDIA_ROOT=/home/<user>/frame-media`
    - `export FLASK_ENV=development`
    - `export SECRET_KEY=dev`
 

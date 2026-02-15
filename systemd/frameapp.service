@@ -1,0 +1,19 @@
+[Unit]
+Description=VFrame Flask App
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pw
+Group=pw
+WorkingDirectory=/home/pw/vframe
+Environment=MEDIA_ROOT=/home/pw/frame-media
+Environment=SECRET_KEY=change-this-before-production
+Environment=FLASK_DEBUG=0
+ExecStart=/home/pw/vframe/.venv/bin/python /home/pw/vframe/app.py
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

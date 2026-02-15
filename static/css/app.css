@@ -76,6 +76,10 @@ main {
     margin-top: 1rem;
 }
 
+.mt-half {
+    margin-top: 0.5rem;
+}
+
 .card {
     background: var(--surface);
     border: 1px solid var(--line);
@@ -229,6 +233,8 @@ td {
 .row-actions {
     display: flex;
     gap: 0.4rem;
+    align-items: center;
+    flex-wrap: wrap;
 }
 
 .row-actions form {
