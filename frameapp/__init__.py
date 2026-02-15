@@ -55,6 +55,14 @@ def create_app(config_object=Config, start_background_worker: bool = True) -> Fl
             abort(404)
         return send_from_directory(thumbs_dir, filename)
 
+    @app.get("/manifest.webmanifest")
+    def manifest():
+        return send_from_directory(app.static_folder, "manifest.webmanifest")
+
+    @app.get("/sw.js")
+    def service_worker():
+        return send_from_directory(app.static_folder, "sw.js")
+
     if start_background_worker:
         start_worker(app)
 

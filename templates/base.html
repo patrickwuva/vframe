@@ -2,25 +2,42 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#1f7a5a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>{% block title %}Frame Admin{% endblock %}</title>
+    <link rel="manifest" href="{{ url_for('manifest') }}">
+    <link rel="icon" href="{{ url_for('static', filename='icons/app-icon.svg') }}" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/app-icon.svg') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
 </head>
 <body>
+{% set endpoint = request.endpoint or '' %}
+{% set is_dashboard = endpoint == 'admin.dashboard' %}
+{% set is_upload = endpoint == 'admin.upload' %}
+{% set is_library = endpoint == 'admin.library' %}
+{% set is_albums = endpoint.startswith('admin.edit_album') or endpoint == 'admin.albums' %}
 <header class="topbar">
     <div class="wrap">
         <a class="brand" href="{{ url_for('admin.dashboard') }}">Pi Frame</a>
-        <nav>
-            <a href="{{ url_for('admin.dashboard') }}">Dashboard</a>
-            <a href="{{ url_for('admin.upload') }}">Upload</a>
-            <a href="{{ url_for('admin.library') }}">Library</a>
-            <a href="{{ url_for('admin.albums') }}">Albums</a>
-            <a href="{{ url_for('player.player_view') }}" target="_blank" rel="noopener">Player</a>
+        <nav class="top-nav">
+            <a class="{% if is_dashboard %}active{% endif %}" href="{{ url_for('admin.dashboard') }}">Dashboard</a>
+            <a class="{% if is_upload %}active{% endif %}" href="{{ url_for('admin.upload') }}">Upload</a>
+            <a class="{% if is_library %}active{% endif %}" href="{{ url_for('admin.library') }}">Library</a>
+            <a class="{% if is_albums %}active{% endif %}" href="{{ url_for('admin.albums') }}">Albums</a>
+            <a href="{{ url_for('player.player_view') }}">Player</a>
         </nav>
     </div>
 </header>
 
 <main class="wrap">
+    <div id="pwa-install-tip" class="install-tip hidden" role="status" aria-live="polite">
+        <span>On iPhone Safari: tap Share, then Add to Home Screen.</span>
+        <button id="install-tip-dismiss" type="button">Dismiss</button>
+    </div>
+
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
     <ul class="flash-list">
@@ -33,5 +50,12 @@
 
     {% block content %}{% endblock %}
 </main>
+<nav class="mobile-nav" aria-label="Primary">
+    <a class="{% if is_dashboard %}active{% endif %}" href="{{ url_for('admin.dashboard') }}">Home</a>
+    <a class="{% if is_upload %}active{% endif %}" href="{{ url_for('admin.upload') }}">Upload</a>
+    <a class="{% if is_library %}active{% endif %}" href="{{ url_for('admin.library') }}">Library</a>
+    <a class="{% if is_albums %}active{% endif %}" href="{{ url_for('admin.albums') }}">Albums</a>
+</nav>
+<script src="{{ url_for('static', filename='js/pwa.js') }}"></script>
 </body>
 </html>

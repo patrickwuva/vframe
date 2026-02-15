@@ -32,6 +32,7 @@ Open:
 - The background worker uses `ffmpeg` + `ffprobe` for video normalization and thumbnails.
 - SQLite metadata is stored at `instance/frame.db` by default.
 - In Admin -> Albums, use `Play on Pi` to switch the active album immediately.
+- Admin includes iPhone-friendly PWA support (safe-area layout, bottom nav, install hint, offline shell cache).
 
 ## Auto-start on boot (Pi HDMI player, native mpv)
 

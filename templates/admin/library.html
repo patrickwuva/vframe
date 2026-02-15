@@ -17,7 +17,7 @@
         <tbody>
             {% for m in media_items %}
             <tr>
-                <td>
+                <td data-label="Preview">
                     {% if m.thumb_path %}
                     <img class="thumb" src="{{ url_for('serve_media', path=m.thumb_path) }}" alt="thumb">
                     {% elif m.normalized_path and m.type == 'photo' %}
@@ -26,17 +26,17 @@
                     <span class="muted">n/a</span>
                     {% endif %}
                 </td>
-                <td>{{ m.type }}</td>
-                <td><span class="badge {{ m.status }}">{{ m.status }}</span></td>
-                <td><code>{{ m.original_path }}</code></td>
-                <td>
+                <td data-label="Type">{{ m.type }}</td>
+                <td data-label="Status"><span class="badge {{ m.status }}">{{ m.status }}</span></td>
+                <td data-label="Original"><code>{{ m.original_path }}</code></td>
+                <td data-label="Normalized">
                     {% if m.normalized_path %}
                     <code>{{ m.normalized_path }}</code>
                     {% else %}
                     <span class="muted">pending</span>
                     {% endif %}
                 </td>
-                <td>
+                <td data-label="Error">
                     {% if m.error %}
                     <code>{{ m.error }}</code>
                     {% else %}
