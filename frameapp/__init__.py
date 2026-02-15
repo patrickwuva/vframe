@@ -15,7 +15,13 @@ from frameapp.worker import start_worker
 
 
 def create_app(config_object=Config, start_background_worker: bool = True) -> Flask:
-    app = Flask(__name__, instance_relative_config=True)
+    base_dir = Path(__file__).resolve().parents[1]
+    app = Flask(
+        __name__,
+        instance_relative_config=True,
+        template_folder=str(base_dir / "templates"),
+        static_folder=str(base_dir / "static"),
+    )
     app.config.from_object(config_object)
 
     Path(app.instance_path).mkdir(parents=True, exist_ok=True)
