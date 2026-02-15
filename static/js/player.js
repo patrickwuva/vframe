@@ -4,73 +4,181 @@
     const root = document.getElementById("player-root");
     const backdropEl = document.getElementById("player-backdrop");
     const overlay = document.getElementById("player-overlay");
-    const imgEl = document.getElementById("player-image");
+    const imageEls = [
+        document.getElementById("player-image-a"),
+        document.getElementById("player-image-b"),
+    ].filter(Boolean);
     const videoEl = document.getElementById("player-video");
+
+    const LANDSCAPE_COVER_THRESHOLD = 0.14;
 
     let playlist = [];
     let currentIndex = 0;
     let timer = null;
     let activeAlbumId = null;
     let playlistKey = null;
+    let activeImageIndex = -1;
+    let imageRequestToken = 0;
 
     function setOverlay(text) {
         overlay.textContent = text;
     }
 
-    function setImageOrientationClass() {
-        const naturalWidth = Number(imgEl.naturalWidth || 0);
-        const naturalHeight = Number(imgEl.naturalHeight || 0);
-        const isLandscape = naturalWidth > 0 && naturalHeight > 0
-            ? naturalWidth >= naturalHeight
-            : false;
-        root.classList.add("showing-image");
-        root.classList.remove("showing-video");
-        root.classList.toggle("image-landscape", isLandscape);
-        root.classList.toggle("image-portrait", !isLandscape);
+    function clearNextTimer() {
+        if (timer) {
+            clearTimeout(timer);
+            timer = null;
+        }
     }
 
-    function showImage(item) {
-        const url = item.normalized_url;
-        const backdropUrl = item.thumb_url || url;
+    function scheduleNext(ms) {
+        clearNextTimer();
+        timer = setTimeout(playNext, ms);
+    }
 
+    function hideAllImages() {
+        imageEls.forEach((img) => {
+            img.classList.remove("visible");
+            img.classList.add("hidden");
+        });
+        activeImageIndex = -1;
+    }
+
+    function hideVideo() {
+        videoEl.onended = null;
         videoEl.pause();
+        videoEl.classList.remove("visible");
         videoEl.classList.add("hidden");
         videoEl.removeAttribute("src");
         videoEl.load();
+    }
+
+    function clearImageModeClasses() {
+        root.classList.remove("image-landscape-cover", "image-landscape-contain", "image-portrait");
+    }
+
+    function chooseImageMode(width, height) {
+        if (!width || !height || width < height) {
+            return "image-portrait";
+        }
+
+        const screenAspect = window.innerWidth / Math.max(1, window.innerHeight);
+        const imageAspect = width / height;
+        const normalizedDelta = Math.abs(imageAspect - screenAspect) / Math.max(screenAspect, 0.01);
+
+        if (normalizedDelta <= LANDSCAPE_COVER_THRESHOLD) {
+            return "image-landscape-cover";
+        }
+        return "image-landscape-contain";
+    }
+
+    function activateImage(targetEl) {
+        imageEls.forEach((img, index) => {
+            const isTarget = img === targetEl;
+            img.classList.toggle("visible", isTarget);
+            img.classList.toggle("hidden", !isTarget);
+            if (isTarget) {
+                activeImageIndex = index;
+            }
+        });
+    }
+
+    function getNextImageEl() {
+        if (!imageEls.length) {
+            return null;
+        }
+        if (imageEls.length === 1 || activeImageIndex < 0) {
+            return imageEls[0];
+        }
+        return imageEls[activeImageIndex === 0 ? 1 : 0];
+    }
+
+    function preloadImage(url) {
+        return new Promise((resolve, reject) => {
+            const probe = new Image();
+            probe.decoding = "async";
+            probe.onload = () => resolve(probe);
+            probe.onerror = () => reject(new Error("image load failed"));
+            probe.src = url;
+        });
+    }
+
+    function prefetchUpcomingPhoto() {
+        if (!playlist.length) {
+            return;
+        }
+        const nextItem = playlist[currentIndex % playlist.length];
+        if (!nextItem || nextItem.type !== "photo" || !nextItem.normalized_url) {
+            return;
+        }
+        const prefetch = new Image();
+        prefetch.src = nextItem.normalized_url;
+    }
+
+    async function showImage(item) {
+        const url = item.normalized_url;
+        if (!url) {
+            return false;
+        }
+
+        const requestId = ++imageRequestToken;
+        const backdropUrl = item.thumb_url || url;
 
         root.classList.add("showing-image");
-        root.classList.remove("showing-video", "image-landscape", "image-portrait");
+        root.classList.remove("showing-video");
+        clearImageModeClasses();
+        hideVideo();
 
         if (backdropEl) {
             backdropEl.style.backgroundImage = `url("${backdropUrl}")`;
         }
 
-        imgEl.onload = () => setImageOrientationClass();
-        imgEl.src = url;
-        imgEl.classList.remove("hidden");
+        try {
+            const probe = await preloadImage(url);
+            if (requestId !== imageRequestToken) {
+                return false;
+            }
+
+            const target = getNextImageEl();
+            if (!target) {
+                return false;
+            }
+
+            target.src = url;
+            const modeClass = chooseImageMode(probe.naturalWidth, probe.naturalHeight);
+            clearImageModeClasses();
+            root.classList.add(modeClass);
+            activateImage(target);
+            return true;
+        } catch (_err) {
+            if (requestId === imageRequestToken) {
+                setOverlay("Failed to load image");
+            }
+            return false;
+        }
     }
 
     function showVideo(url) {
+        imageRequestToken += 1;
+        clearNextTimer();
+
         root.classList.add("showing-video");
-        root.classList.remove("showing-image", "image-landscape", "image-portrait");
+        root.classList.remove("showing-image");
+        clearImageModeClasses();
+
         if (backdropEl) {
             backdropEl.style.backgroundImage = "none";
         }
 
-        imgEl.classList.add("hidden");
+        hideAllImages();
 
         videoEl.src = url;
         videoEl.classList.remove("hidden");
+        videoEl.classList.add("visible");
         videoEl.play().catch(() => {
             setOverlay("Video autoplay blocked; tap to continue");
         });
-    }
-
-    function scheduleNext(ms) {
-        if (timer) {
-            clearTimeout(timer);
-        }
-        timer = setTimeout(playNext, ms);
+        videoEl.onended = () => playNext();
     }
 
     function playNext() {
@@ -85,14 +193,18 @@
         if (item.type === "video") {
             setOverlay("");
             showVideo(item.normalized_url);
-            videoEl.onended = () => playNext();
             return;
         }
 
         setOverlay("");
-        showImage(item);
-        const durationMs = Math.max(1, Number(item.duration_seconds || 8)) * 1000;
-        scheduleNext(durationMs);
+        showImage(item).then((shown) => {
+            if (!shown) {
+                return;
+            }
+            prefetchUpcomingPhoto();
+            const durationMs = Math.max(1, Number(item.duration_seconds || 8)) * 1000;
+            scheduleNext(durationMs);
+        });
     }
 
     async function fetchJson(url, options) {
@@ -131,24 +243,30 @@
                 playlist = [];
                 activeAlbumId = null;
                 playlistKey = null;
-                root.classList.remove("showing-image", "showing-video", "image-landscape", "image-portrait");
+                imageRequestToken += 1;
+                clearNextTimer();
+                root.classList.remove("showing-image", "showing-video");
+                clearImageModeClasses();
+                hideAllImages();
+                hideVideo();
                 if (backdropEl) {
                     backdropEl.style.backgroundImage = "none";
                 }
                 setOverlay("No active album selected");
                 return;
             }
+
             const payload = await fetchJson(`/api/albums/${status.active_album_id}/playlist`);
             const nextKey = buildPlaylistKey(status.active_album_id, payload);
             if (nextKey === playlistKey && playlist.length) {
                 return;
             }
 
-            const items = payload.items || [];
-            playlist = maybeShuffle(items, Boolean(payload.settings && payload.settings.shuffle));
+            playlist = maybeShuffle(payload.items || [], Boolean(payload.settings && payload.settings.shuffle));
             activeAlbumId = status.active_album_id;
             playlistKey = nextKey;
             currentIndex = 0;
+            clearNextTimer();
 
             if (!playlist.length) {
                 setOverlay("Active album has no ready media");
@@ -156,7 +274,7 @@
             }
 
             playNext();
-        } catch (err) {
+        } catch (_err) {
             setOverlay("Player failed to load playlist");
         }
     }
