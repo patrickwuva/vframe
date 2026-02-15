@@ -1,8 +1,16 @@
 #!/usr/bin/env bash
 set -eu
 
-export DISPLAY=:0
-export XAUTHORITY=${XAUTHORITY:-/home/pw/.Xauthority}
+export DISPLAY="${DISPLAY:-:0}"
+export XAUTHORITY="${XAUTHORITY:-/home/pw/.Xauthority}"
+
+# Wait for the desktop X session to come up before launching Chromium.
+for _ in $(seq 1 30); do
+  if xset q >/dev/null 2>&1; then
+    break
+  fi
+  sleep 1
+done
 
 xset -dpms || true
 xset s off || true

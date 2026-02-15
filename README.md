@@ -28,6 +28,15 @@ Open:
 
 ## Auto-start on boot (Pi HDMI player)
 
+Use Raspberry Pi OS with Desktop for simplest kiosk setup.
+
+Set desktop auto-login and graphical boot target:
+
+```bash
+sudo raspi-config nonint do_boot_behaviour B4
+sudo systemctl set-default graphical.target
+```
+
 Install and enable the system services:
 
 ```bash
@@ -48,3 +57,4 @@ journalctl -u frameapp.service -u kiosk.service -f
 Important:
 - `systemd/frameapp.service` and `systemd/kiosk.service` currently use user/path `pw` and `/home/pw/vframe`; edit those if your username/path differs.
 - Set a real secret in `systemd/frameapp.service` (`Environment=SECRET_KEY=...`) before long-term use.
+- `systemd/kiosk.service` in this repo is for Raspberry Pi OS Desktop (not Lite).

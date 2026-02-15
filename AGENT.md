@@ -22,6 +22,7 @@ Primary goals:
 - **Media processing:** `ffmpeg` (thumbnails + video conversion)
 - **Reverse proxy (optional):** Caddy or nginx
 - **Runtime:** systemd service (preferred) or Docker Compose
+- **Recommended OS mode for kiosk:** Raspberry Pi OS Desktop (auto-login)
 
 ---
 
