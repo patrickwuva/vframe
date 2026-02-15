@@ -9,6 +9,7 @@ import tempfile
 import time
 import urllib.error
 import urllib.request
+from urllib.parse import urljoin
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -53,7 +54,10 @@ def resolve_urls(payload: dict[str, Any]) -> list[str]:
     for item in items:
         url = item.get("normalized_url")
         if isinstance(url, str) and url:
-            urls.append(url)
+            if url.startswith(("http://", "https://")):
+                urls.append(url)
+            else:
+                urls.append(urljoin(f"{API_BASE}/", url.lstrip("/")))
     return urls
 
 
