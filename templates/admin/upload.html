@@ -6,6 +6,15 @@
     <p>Files are saved into `incoming/` and normalized in the background.</p>
 
     <form method="post" enctype="multipart/form-data" class="upload-form">
+        {% if albums %}
+        <label for="target_album_id">Add uploads to album (optional)</label>
+        <select id="target_album_id" name="target_album_id">
+            <option value="">Do not add to album</option>
+            {% for album in albums %}
+            <option value="{{ album.id }}">{{ album.name }}</option>
+            {% endfor %}
+        </select>
+        {% endif %}
         <input type="file" name="files" multiple accept=".jpg,.jpeg,.png,.mp4,.mov,.m4v,.avi,.mkv,.webm">
         <button type="submit">Upload</button>
     </form>

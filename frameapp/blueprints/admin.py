@@ -53,8 +53,13 @@ def dashboard():
 def upload():
     if request.method == "POST":
         files = request.files.getlist("files")
+        target_album_id = (request.form.get("target_album_id") or "").strip() or None
         if not files:
             flash("No files selected", "error")
+            return redirect(url_for("admin.upload"))
+
+        if target_album_id and store.get_album(target_album_id) is None:
+            flash("Selected album was not found", "error")
             return redirect(url_for("admin.upload"))
 
         incoming_dir = Path(current_app.config["INCOMING_DIR"])
@@ -64,6 +69,7 @@ def upload():
         accepted = 0
         rejected = 0
         queued = 0
+        added_to_album = 0
 
         for file in files:
             if not file or not file.filename:
@@ -86,23 +92,61 @@ def upload():
             rel_path = str(Path("incoming") / dest_name)
             media_id = store.create_media(rel_path, media_type)
             accepted += 1
+            if target_album_id:
+                store.add_media_to_album(target_album_id, media_id)
+                added_to_album += 1
 
             if enqueue_media(media_id):
                 queued += 1
 
-        flash(
-            f"Uploaded {accepted} file(s), rejected {rejected}. Queued for processing: {queued}.",
-            "success",
-        )
+        message = f"Uploaded {accepted} file(s), rejected {rejected}. Queued for processing: {queued}."
+        if target_album_id:
+            message += f" Added to album: {added_to_album}."
+        flash(message, "success")
         return redirect(url_for("admin.library"))
 
-    return render_template("admin/upload.html")
+    return render_template("admin/upload.html", albums=store.list_albums())
 
 
 @bp.get("/admin/library")
 def library():
     media_items = store.list_media()
-    return render_template("admin/library.html", media_items=media_items)
+    return render_template(
+        "admin/library.html",
+        media_items=media_items,
+        albums=store.list_albums(),
+        active_album_id=store.get_active_album_id(),
+    )
+
+
+@bp.post("/admin/library/add-to-album")
+def library_add_to_album():
+    album_id = (request.form.get("album_id") or "").strip()
+    media_ids = request.form.getlist("media_ids")
+    if not album_id:
+        flash("Pick an album first", "error")
+        return redirect(url_for("admin.library"))
+
+    album = store.get_album(album_id)
+    if album is None:
+        flash("Album not found", "error")
+        return redirect(url_for("admin.library"))
+
+    if not media_ids:
+        flash("No media selected", "error")
+        return redirect(url_for("admin.library"))
+
+    added = 0
+    seen: set[str] = set()
+    for media_id in media_ids:
+        if not media_id or media_id in seen:
+            continue
+        seen.add(media_id)
+        store.add_media_to_album(album_id, media_id)
+        added += 1
+
+    flash(f"Added {added} item(s) to album '{album['name']}'", "success")
+    return redirect(url_for("admin.library"))
 
 
 @bp.route("/admin/albums", methods=["GET", "POST"])
@@ -113,9 +157,9 @@ def albums():
             flash("Album name is required", "error")
             return redirect(url_for("admin.albums"))
 
-        store.create_album(name)
+        album_id = store.create_album(name)
         flash("Album created", "success")
-        return redirect(url_for("admin.albums"))
+        return redirect(url_for("admin.edit_album", album_id=album_id))
 
     all_albums = store.list_albums()
     active_album_id = store.get_active_album_id()
@@ -166,6 +210,26 @@ def update_album_items(album_id: str):
         direction = "up" if action == "move_up" else "down"
         if media_id:
             store.move_media_in_album(album_id, media_id, direction)
+
+    elif action == "reorder_positions":
+        items = store.get_album_items(album_id)
+        if not items:
+            return redirect(url_for("admin.edit_album", album_id=album_id))
+
+        scored: list[tuple[int, int, str]] = []
+        for idx, item in enumerate(items):
+            media_id = item["media_id"]
+            raw = (request.form.get(f"sort_{media_id}") or "").strip()
+            try:
+                value = int(raw)
+            except ValueError:
+                value = idx + 1
+            scored.append((value, idx, media_id))
+
+        scored.sort(key=lambda x: (x[0], x[1]))
+        ordered_ids = [x[2] for x in scored]
+        store.reorder_album_items(album_id, ordered_ids)
+        flash("Album order updated", "success")
 
     return redirect(url_for("admin.edit_album", album_id=album_id))
 

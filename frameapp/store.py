@@ -206,6 +206,41 @@ def normalize_album_order(album_id: str) -> None:
     db.commit()
 
 
+def reorder_album_items(album_id: str, ordered_media_ids: list[str]) -> None:
+    if not ordered_media_ids:
+        return
+
+    db = get_db()
+    rows = db.execute(
+        "SELECT media_id FROM album_items WHERE album_id = ? ORDER BY sort_index ASC",
+        (album_id,),
+    ).fetchall()
+    existing_ids = [row["media_id"] for row in rows]
+    if not existing_ids:
+        return
+
+    existing_set = set(existing_ids)
+    requested = [mid for mid in ordered_media_ids if mid in existing_set]
+    seen: set[str] = set()
+    deduped = []
+    for mid in requested:
+        if mid in seen:
+            continue
+        seen.add(mid)
+        deduped.append(mid)
+
+    for mid in existing_ids:
+        if mid not in seen:
+            deduped.append(mid)
+
+    for idx, mid in enumerate(deduped):
+        db.execute(
+            "UPDATE album_items SET sort_index = ? WHERE album_id = ? AND media_id = ?",
+            (idx, album_id, mid),
+        )
+    db.commit()
+
+
 def get_settings() -> dict[str, str]:
     db = get_db()
     rows = db.execute("SELECT key, value FROM settings").fetchall()

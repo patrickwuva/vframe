@@ -17,6 +17,9 @@
 <section class="grid two mt">
     <article class="card">
         <h2>Current Order</h2>
+        <form id="reorder-form" method="post" action="{{ url_for('admin.update_album_items', album_id=album.id) }}">
+            <input type="hidden" name="action" value="reorder_positions">
+        </form>
         <ul class="playlist">
             {% for item in items %}
             <li>
@@ -26,16 +29,17 @@
                     <span>{{ item.type }}</span>
                 </div>
                 <div class="row-actions">
-                    <form method="post" action="{{ url_for('admin.update_album_items', album_id=album.id) }}">
-                        <input type="hidden" name="action" value="move_up">
-                        <input type="hidden" name="media_id" value="{{ item.media_id }}">
-                        <button type="submit">Up</button>
-                    </form>
-                    <form method="post" action="{{ url_for('admin.update_album_items', album_id=album.id) }}">
-                        <input type="hidden" name="action" value="move_down">
-                        <input type="hidden" name="media_id" value="{{ item.media_id }}">
-                        <button type="submit">Down</button>
-                    </form>
+                    <label class="small-label" for="sort_{{ item.media_id }}">Position</label>
+                    <input
+                        id="sort_{{ item.media_id }}"
+                        form="reorder-form"
+                        class="sort-input"
+                        type="number"
+                        min="1"
+                        step="1"
+                        name="sort_{{ item.media_id }}"
+                        value="{{ loop.index }}"
+                    >
                     <form method="post" action="{{ url_for('admin.update_album_items', album_id=album.id) }}">
                         <input type="hidden" name="action" value="remove">
                         <input type="hidden" name="media_id" value="{{ item.media_id }}">
@@ -47,15 +51,23 @@
             <li>No items in album yet</li>
             {% endfor %}
         </ul>
+        {% if items %}
+        <button form="reorder-form" type="submit">Save Order</button>
+        {% endif %}
     </article>
 
     <article class="card">
         <h2>Add Ready Media</h2>
+        <input id="ready-filter" class="mb-half" type="search" placeholder="Filter by media id or filename">
         <form method="post" action="{{ url_for('admin.update_album_items', album_id=album.id) }}">
             <input type="hidden" name="action" value="add">
+            <label class="checkbox-row">
+                <input id="ready-select-all" type="checkbox">
+                Select all shown
+            </label>
             <div class="media-select">
                 {% for m in ready_media %}
-                <label>
+                <label class="ready-item" data-filter="{{ m.id }} {{ m.original_path }}">
                     <input type="checkbox" name="media_ids" value="{{ m.id }}">
                     {% if m.thumb_path %}
                     <img class="thumb" src="{{ url_for('serve_media', path=m.thumb_path) }}" alt="thumb">
@@ -70,4 +82,29 @@
         </form>
     </article>
 </section>
+<script>
+(() => {
+  const filterInput = document.getElementById("ready-filter");
+  const selectAll = document.getElementById("ready-select-all");
+  const items = Array.from(document.querySelectorAll(".ready-item"));
+  if (filterInput) {
+    filterInput.addEventListener("input", () => {
+      const q = filterInput.value.trim().toLowerCase();
+      items.forEach((item) => {
+        const text = (item.dataset.filter || "").toLowerCase();
+        item.style.display = text.includes(q) ? "" : "none";
+      });
+    });
+  }
+  if (selectAll) {
+    selectAll.addEventListener("change", () => {
+      items.forEach((item) => {
+        if (item.style.display === "none") return;
+        const cb = item.querySelector("input[type='checkbox']");
+        if (cb) cb.checked = selectAll.checked;
+      });
+    });
+  }
+})();
+</script>
 {% endblock %}

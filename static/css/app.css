@@ -92,6 +92,10 @@ main {
     margin-top: 0.5rem;
 }
 
+.mb-half {
+    margin-bottom: 0.5rem;
+}
+
 .card {
     background: var(--surface);
     border: 1px solid var(--line);
@@ -257,6 +261,43 @@ td {
 .row-actions button {
     margin: 0;
     width: auto;
+}
+
+.small-label {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--muted);
+}
+
+.sort-input {
+    width: 90px;
+    min-height: 40px;
+}
+
+.toolbar-row {
+    display: flex;
+    gap: 0.6rem;
+    align-items: end;
+    margin-bottom: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.toolbar-row label {
+    margin: 0;
+}
+
+.toolbar-row select {
+    min-width: 220px;
+    width: auto;
+}
+
+.toolbar-row button {
+    width: auto;
+    margin: 0;
+}
+
+.toolbar-inline {
+    margin-bottom: 0.65rem;
 }
 
 .media-select {
@@ -497,5 +538,14 @@ td {
         margin-bottom: 0.1rem;
         text-transform: uppercase;
         letter-spacing: 0.02em;
+    }
+
+    .toolbar-row select,
+    .toolbar-row button {
+        width: 100%;
+    }
+
+    .sort-input {
+        width: 100%;
     }
 }
